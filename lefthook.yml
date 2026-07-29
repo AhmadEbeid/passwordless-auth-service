@@ -7,7 +7,10 @@ pre-commit:
       stage_fixed: true
     lint:
       glob: "*.go"
-      run: golangci-lint run
+      # Pinned to the version CI runs. A bare `golangci-lint` picks up whatever
+      # is on PATH, and a v1 binary cannot read this repo's v2 config — the hook
+      # then fails for every commit on that machine rather than linting.
+      run: go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 run
 
 pre-push:
   commands:
