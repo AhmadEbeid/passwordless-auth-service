@@ -1,0 +1,761 @@
+components:
+  schemas:
+    AccountListItemDTO:
+      additionalProperties: false
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        google_linked:
+          type: boolean
+        id:
+          type: string
+        lockout_active:
+          type: boolean
+        phone:
+          type: string
+        role:
+          type: string
+        signup_method:
+          type: string
+      required:
+        - id
+        - role
+        - phone
+        - google_linked
+        - signup_method
+        - created_at
+        - lockout_active
+      type: object
+    AccountStruct:
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        language:
+          type: string
+        role:
+          type: string
+      required:
+        - id
+        - role
+        - language
+      type: object
+    AnalyticsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AnalyticsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        lockout_count:
+          format: int64
+          type: integer
+        signups_by_method:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+        verification_failure_rate:
+          format: double
+          type: number
+      required:
+        - signups_by_method
+        - verification_failure_rate
+        - lockout_count
+      type: object
+    ApiError:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ApiError.json
+          format: uri
+          readOnly: true
+          type: string
+        attempts_remaining:
+          description: Wrong-code attempts left before lockout; present on incorrect_code
+          format: int64
+          type: integer
+        code:
+          description: Stable machine-readable error code
+          enum:
+            - invalid_phone
+            - account_exists
+            - no_account
+            - incorrect_code
+            - locked
+            - expired
+            - cooldown_active
+            - send_failed
+            - not_found
+            - not_implemented
+            - bad_request
+            - unprocessable_entity
+            - unauthorized
+            - forbidden
+            - google_failed
+            - internal_error
+            - invalid_range
+          type: string
+        locked_until:
+          description: When a lockout lifts (RFC3339); present on locked errors
+          format: date-time
+          type: string
+        message:
+          description: Human-readable error message
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    ClearLockoutOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ClearLockoutOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        cleared:
+          type: boolean
+      required:
+        - cleared
+      type: object
+    ConfirmVerificationInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ConfirmVerificationInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        code:
+          description: The 6-digit verification code
+          maxLength: 6
+          minLength: 6
+          type: string
+      required:
+        - code
+      type: object
+    ConfirmVerificationOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ConfirmVerificationOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        account:
+          $ref: "#/components/schemas/AccountStruct"
+        route:
+          type: string
+        session_token:
+          type: string
+      required:
+        - session_token
+        - account
+        - route
+      type: object
+    GetSessionOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetSessionOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        account:
+          $ref: "#/components/schemas/AccountStruct"
+      required:
+        - account
+      type: object
+    GoogleExchangeInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GoogleExchangeInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        id_token:
+          description: Google ID token to verify
+          type: string
+        role:
+          description: Account role; informational only — meaningful just when this leads into a new Google signup
+          enum:
+            - coach
+            - athlete
+          type: string
+      required:
+        - id_token
+      type: object
+    GoogleExchangeOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GoogleExchangeOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        account:
+          $ref: "#/components/schemas/AccountStruct"
+        next:
+          description: Set to verify_phone when no account is linked to this Google identity yet
+          type: string
+        pending_link_token:
+          description: Pass this to POST /auth/verifications as google_link_token to link the verified Google identity on signup
+          type: string
+        phone_prefill:
+          type: string
+        route:
+          type: string
+        session_token:
+          type: string
+      type: object
+    RequestVerificationInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RequestVerificationInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        google_link_token:
+          description: Signed token from /auth/google's no-account response, proving a verified Google identity to link on account creation (signup only)
+          type: string
+        intent:
+          description: Whether this starts a signup or signin flow
+          enum:
+            - signup
+            - signin
+          type: string
+        language:
+          description: Preferred app language (signup only)
+          enum:
+            - ar
+            - en
+          type: string
+        phone:
+          description: Egyptian mobile number in any accepted form (01…, +20…, or 10 digits)
+          type: string
+        role:
+          description: Account role, set at signup and immutable (signup only)
+          enum:
+            - coach
+            - athlete
+          type: string
+      required:
+        - intent
+        - phone
+      type: object
+    RequestVerificationOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RequestVerificationOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        expires_at:
+          format: date-time
+          type: string
+        resend_available_at:
+          format: date-time
+          type: string
+        verification_id:
+          type: string
+      required:
+        - verification_id
+        - expires_at
+        - resend_available_at
+      type: object
+    ResendVerificationOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ResendVerificationOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        resend_available_at:
+          format: date-time
+          type: string
+      required:
+        - resend_available_at
+      type: object
+info:
+  title: Passwordless Auth API
+  version: 1.0.0
+openapi: 3.1.0
+paths:
+  /admin/accounts:
+    get:
+      operationId: admin-list-accounts
+      parameters:
+        - description: Filter accounts to phones containing this substring
+          explode: false
+          in: query
+          name: phone
+          schema:
+            description: Filter accounts to phones containing this substring
+            type: string
+        - description: Max accounts to return
+          explode: false
+          in: query
+          name: limit
+          schema:
+            default: 50
+            description: Max accounts to return
+            format: int64
+            maximum: 200
+            minimum: 1
+            type: integer
+        - description: Accounts to skip, for pagination
+          explode: false
+          in: query
+          name: offset
+          schema:
+            default: 0
+            description: Accounts to skip, for pagination
+            format: int64
+            minimum: 0
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/AccountListItemDTO"
+                type:
+                  - array
+                  - "null"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unauthorized
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+      summary: List/search registered accounts
+      tags:
+        - admin
+  /admin/accounts/{id}/clear-lockout:
+    post:
+      operationId: admin-clear-lockout
+      parameters:
+        - description: Account id
+          in: path
+          name: id
+          required: true
+          schema:
+            description: Account id
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClearLockoutOutputBody"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Not Found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+      summary: Clear an active verification lockout on an account's phone
+      tags:
+        - admin
+  /admin/analytics:
+    get:
+      operationId: admin-analytics
+      parameters:
+        - description: Time range for the aggregates
+          explode: false
+          in: query
+          name: range
+          schema:
+            default: 7d
+            description: Time range for the aggregates
+            enum:
+              - 24h
+              - 7d
+              - 30d
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOutputBody"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unauthorized
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+      summary: Aggregate signup/authentication analytics over a time range
+      tags:
+        - admin
+  /auth/google:
+    post:
+      operationId: google-exchange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleExchangeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleExchangeOutputBody"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unauthorized
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+      summary: Exchange a Google ID token for a session or a signup route
+      tags:
+        - auth
+  /auth/session:
+    delete:
+      operationId: sign-out
+      parameters:
+        - description: Bearer session token
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer session token
+            type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unauthorized
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+      summary: Sign out the current device
+      tags:
+        - auth
+    get:
+      operationId: get-session
+      parameters:
+        - description: Bearer session token
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer session token
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetSessionOutputBody"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unauthorized
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+      summary: Validate the current session
+      tags:
+        - auth
+  /auth/verifications:
+    post:
+      operationId: request-verification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestVerificationInputBody"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestVerificationOutputBody"
+          description: Created
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Conflict
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "423":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Locked
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Too Many Requests
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Not Implemented
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Bad Gateway
+      summary: Request a WhatsApp verification code
+      tags:
+        - auth
+  /auth/verifications/{id}/confirm:
+    post:
+      operationId: confirm-verification
+      parameters:
+        - description: Verification id
+          in: path
+          name: id
+          required: true
+          schema:
+            description: Verification id
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmVerificationInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfirmVerificationOutputBody"
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Not Found
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Gone
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "423":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Locked
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+      summary: Confirm the verification code
+      tags:
+        - auth
+  /auth/verifications/{id}/resend:
+    post:
+      operationId: resend-verification
+      parameters:
+        - description: Verification id
+          in: path
+          name: id
+          required: true
+          schema:
+            description: Verification id
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResendVerificationOutputBody"
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Not Found
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Gone
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Unprocessable Entity
+        "423":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Locked
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Too Many Requests
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Internal Server Error
+        "502":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Bad Gateway
+      summary: Resend the verification code
+      tags:
+        - auth

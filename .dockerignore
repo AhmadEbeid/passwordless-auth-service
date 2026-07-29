@@ -1,0 +1,10 @@
+.git
+.github
+bin
+dist
+docs
+*.md
+lefthook.yml
+.golangci.yml
+.env
+.env.local

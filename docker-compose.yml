@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: authsvc
+      POSTGRES_PASSWORD: authsvc
+      POSTGRES_DB: authsvc
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authsvc"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build: .
+    command: ["migrate", "up"]
+    environment:
+      DATABASE_URL: postgres://authsvc:authsvc@db:5432/authsvc?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgres://authsvc:authsvc@db:5432/authsvc?sslmode=disable
+      HTTP_PORT: "8080"
+      LOG_LEVEL: debug
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

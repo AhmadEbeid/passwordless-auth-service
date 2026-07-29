@@ -1,0 +1,42 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - gosec
+    - errorlint
+    - bodyclose
+    - noctx
+    - sqlclosecheck
+    - rowserrcheck
+    # --- house rules, enforced rather than reviewed for ---
+    - contextcheck # ctx propagated across call chains
+    - sloglint     # structured logging via slog only
+    - depguard     # the hexagonal import boundary
+
+  settings:
+    depguard:
+      rules:
+        # pgx is a persistence detail. Import it only in internal/platform/db, a
+        # feature's own postgres/ adapter, or the cmd/ composition root (driver
+        # registration for migrations) — never in domain, service or handler.
+        db-driver-isolation:
+          files:
+            - "!**/internal/platform/db/**"
+            - "!**/postgres/**"
+            - "!**/cmd/**"
+          deny:
+            - pkg: github.com/jackc/pgx
+              desc: pgx is a persistence detail; import it only in internal/platform/db or a feature's postgres/ adapter
+        # A feature must not reach into another feature's internals. depguard
+        # needs one rule per feature, so each lands with its feature, e.g.:
+        #   booking-isolation:
+        #     files: ["**/internal/booking/**"]
+        #     deny:
+        #       - pkg: github.com/AhmadEbeid/passwordless-auth-service/internal/pricing/postgres
+        #         desc: use pricing's exported service interface, not its internals
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
