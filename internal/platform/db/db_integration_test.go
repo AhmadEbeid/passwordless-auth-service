@@ -6,9 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/testcontainers/testcontainers-go"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/AhmadEbeid/passwordless-auth-service/internal/platform/config"
 	"github.com/AhmadEbeid/passwordless-auth-service/internal/platform/db"
@@ -21,7 +19,10 @@ func TestInTx_CommitAndRollback(t *testing.T) {
 		tcpostgres.WithDatabase("test"),
 		tcpostgres.WithUsername("test"),
 		tcpostgres.WithPassword("test"),
-		testcontainers.WithWaitStrategy(wait.ForListeningPort("5432/tcp")),
+		// Postgres binds the port during init and then restarts, so waiting on
+		// the port alone races the restart. This waits for the readiness log
+		// twice and then the port, per the module's own guidance.
+		tcpostgres.BasicWaitStrategies(),
 	)
 	if err != nil {
 		t.Fatalf("start postgres: %v", err)

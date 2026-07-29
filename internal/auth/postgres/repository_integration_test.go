@@ -15,9 +15,7 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
-	"github.com/testcontainers/testcontainers-go"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/AhmadEbeid/passwordless-auth-service/internal/auth"
 	authpg "github.com/AhmadEbeid/passwordless-auth-service/internal/auth/postgres"
@@ -35,7 +33,10 @@ func newRepos(t *testing.T) authpg.Repositories {
 		tcpostgres.WithDatabase("test"),
 		tcpostgres.WithUsername("test"),
 		tcpostgres.WithPassword("test"),
-		testcontainers.WithWaitStrategy(wait.ForListeningPort("5432/tcp")),
+		// Postgres binds the port during init and then restarts, so waiting on
+		// the port alone races the restart. This waits for the readiness log
+		// twice and then the port, per the module's own guidance.
+		tcpostgres.BasicWaitStrategies(),
 	)
 	if err != nil {
 		t.Fatalf("start postgres: %v", err)
